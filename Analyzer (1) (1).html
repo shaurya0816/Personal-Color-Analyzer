@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorMatch AI - Find Your Perfect Colors</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --warm-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --cool-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        h1, h2, h3, .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .dark {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+        }
+        
+        .light {
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b7280;
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gradient-border {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 1rem;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: var(--primary-gradient);
+            border-radius: 1.1rem;
+            z-index: -1;
+        }
+        
+        .upload-zone {
+            border: 2px dashed rgba(102, 126, 234, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .color-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .color-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .analyzing-pulse {
+            animation: analyzing 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes analyzing {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        
+        .face-box {
+            border: 3px solid #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            animation: face-detected 0.5s ease-out;
+        }
+        
+        @keyframes face-detected {
+            0% { opacity: 0; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.6s ease-out forwards;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .clothing-preview {
+            transition: all 0.4s ease;
+        }
+        
+        .clothing-preview:hover {
+            transform: scale(1.1) rotate(2deg);
+        }
+        
+        .seasonal-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        .spring { background: linear-gradient(135deg, #a8e063, #56ab2f); }
+        .summer { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .autumn { background: linear-gradient(135deg, #f2994a, #f2c94c); }
+        .winter { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .mode-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-toggle::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .dark .mode-toggle::after {
+            left: 33px;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: #1a1a2e;
+            color: white;
+            font-size: 0.75rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+            bottom: calc(100% + 5px);
+        }
+
+        .scroll-hidden::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ========== SHAURYA SIGNATURE STYLES ========== */
+        .signature-premium {
+            position: fixed;
+            top: 85px;
+            right: 20px;
+            z-index: 100;
+            animation: floatIn 1.5s ease-out;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .signature-premium:hover {
+            transform: scale(1.1) rotate(2deg);
+        }
+        
+        .signature-svg {
+            filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.4));
+        }
+        
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) rotate(-10deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+        }
+
+        .signature-float {
+            animation: signatureFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes signatureFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @media (max-width: 768px) {
+            .signature-premium {
+                top: 70px;
+                right: 10px;
+            }
+            
+            .signature-svg {
+                width: 150px;
+                height: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .signature-premium {
+                top: 65px;
+                right: 5px;
+            }
+            
+            .signature-svg {
+                width: 120px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body class="dark min-h-screen">
+    
+    <!-- Shaurya Signature -->
+    <div class="signature-premium signature-float">
+        <svg width="200" height="80" viewbox="0 0 200 80" class="signature-svg">
+            <defs>
+                <lineargradient id="signatureGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1">
+                        <animate attributename="stop-color" values="#667eea;#764ba2;#f093fb;#667eea" dur="3s" repeatcount="indefinite" />
+                    </stop>
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1">
+                        <animate attributename="stop-color" values="#764ba2;#f093fb;#667eea;#764ba2" dur="3s" repeatcount="indefinite" />
+                    </stop>
+                </lineargradient>
+                <filter id="glow">
+                    <fegaussianblur stddeviation="3" result="coloredBlur" />
+                    <femerge>
+                        <femergenode in="coloredBlur" />
+                        <femergenode in="SourceGraphic" />
+                    </femerge>
+                </filter>
+            </defs>
+            <text x="100" y="45" font-family="Playfair Display, serif" font-size="32" font-weight="700" fill="url(#signatureGradient)" text-anchor="middle" filter="url(#glow)">
+                Shaurya
+                <animate attributename="opacity" values="0.8;1;0.8" dur="2s" repeatcount="indefinite" />
+            </text>
+            <text x="100" y="63" font-family="Inter, sans-serif" font-size="10" fill="currentColor" text-anchor="middle" opacity="0.6" letter-spacing="2">
+                CREATOR
+            </text>
+            <path d="M 30 70 Q 100 68 170 70" stroke="url(#signatureGradient)" stroke-width="2" fill="none">
+                <animate attributename="d" values="M 30 70 Q 100 68 170 70;M 30 70 Q 100 72 170 70;M 30 70 Q 100 68 170 70" dur="2s" repeatcount="indefinite" />
+            </path>
+        </svg>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--primary-gradient)">
+                    <i class="fas fa-palette text-white text-lg"></i>
+                </div>
+                <h1 class="font-display text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">ColorMatch AI</h1>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button id="saveResults" class="hidden px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105" style="background: var(--primary-gradient)">
+                    <i class="fas fa-download mr-2"></i>Save Results
+                </button>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-sun text-yellow-400"></i>
+                    <div class="mode-toggle" id="modeToggle"></div>
+                    <i class="fas fa-moon text-purple-400"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- Hero Section -->
+            <section class="text-center mb-12 slide-up">
+                <h2 class="font-display text-4xl md:text-5xl font-bold mb-4">
+                    Discover Your <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">Perfect Colors</span>
+                </h2>
+                <p class="text-lg opacity-70 max-w-2xl mx-auto">
+                    Our AI analyzes your unique features to recommend clothing colors that enhance your natural beauty.
+                </p>
+            </section>
+
+            <!-- Gender Selection -->
+            <section class="mb-8 slide-up" style="animation-delay: 0.1s">
+                <div class="flex justify-center gap-4 flex-wrap">
+                    <button class="gender-btn px-6 py-3 rounded-xl font-medium transition-all active" data-gender="neutral" style="background: var(--primary-gradient)">
+                        <i class="fas fa-user mr-2"></i>Neutral
+                    </button>
+                    <button class="gender-btn px-6 py-3 rounded-xl font-medium transition-all glass-card hover:scale-105" data-gender="female">
+                        <i class="fas fa-venus mr-2"></i>Feminine
+                    </button>
+                    <button class="gender-btn px-6 py-3 rounded-xl font-medium transition-all glass-card hover:scale-105" data-gender="male">
+                        <i class="fas fa-mars mr-2"></i>Masculine
+                    </button>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section id="uploadSection" class="mb-12 slide-up" style="animation-delay: 0.2s">
+                <div class="max-w-2xl mx-auto">
+                    <div class="glass-card rounded-2xl p-8">
+                        <!-- Instructions -->
+                        <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                            <h4 class="font-semibold mb-2 flex items-center gap-2">
+                                <i class="fas fa-lightbulb text-yellow-400"></i>
+                                Tips for Best Results
+                            </h4>
+                            <ul class="text-sm opacity-70 space-y-1">
+                                <li>• Use good, natural lighting</li>
+                                <li>• Face the camera directly</li>
+                                <li>• Remove heavy makeup or filters</li>
+                                <li>• Ensure only one face is visible</li>
+                            </ul>
+                        </div>
+
+                        <!-- Upload Zone -->
+                        <div id="uploadZone" class="upload-zone rounded-2xl p-12 text-center cursor-pointer">
+                            <div class="relative inline-block mb-4">
+                                <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background: var(--primary-gradient)">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-white"></i>
+                                </div>
+                                <div class="absolute inset-0 rounded-full pulse-ring" style="background: var(--primary-gradient); opacity: 0.3"></div>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-2">Upload Your Photo</h3>
+                            <p class="opacity-70 mb-4">Drag &amp; drop or click to browse</p>
+                            <p class="text-sm opacity-50">Supports JPG, PNG • Max 10MB</p>
+                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/jpg">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section id="previewSection" class="hidden mb-12">
+                <div class="max-w-2xl mx-auto glass-card rounded-2xl p-6">
+                    <div class="relative rounded-xl overflow-hidden">
+                        <img id="previewImage" class="w-full object-contain max-h-96 mx-auto" alt="Preview">
+                        <div id="faceBox" class="hidden absolute face-box rounded-lg"></div>
+                    </div>
+                    <div class="flex gap-4 mt-4">
+                        <button id="analyzeBtn" class="flex-1 py-3 rounded-xl font-medium transition-all hover:scale-[1.02]" style="background: var(--primary-gradient)">
+                            <i class="fas fa-magic mr-2"></i>Analyze My Colors
+                        </button>
+                        <button id="resetBtn" class="px-6 py-3 rounded-xl font-medium glass-card transition-all hover:scale-105">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analyzing Section -->
+            <section id="analyzingSection" class="hidden mb-12">
+                <div class="max-w-2xl mx-auto glass-card rounded-2xl p-8 text-center">
+                    <div class="analyzing-pulse mb-6">
+                        <div class="w-24 h-24 mx-auto rounded-full flex items-center justify-center" style="background: var(--primary-gradient)">
+                            <i class="fas fa-brain text-4xl text-white"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold mb-2">Analyzing Your Features</h3>
+                    <p class="opacity-70 mb-6" id="analysisStatus">Detecting face...</p>
+                    <div class="progress-bar max-w-xs mx-auto">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="hidden">
+                <!-- Analysis Summary -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <div class="glass-card rounded-2xl p-6 slide-up">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--warm-gradient)">
+                                <i class="fas fa-palette text-white"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-70">Skin Tone</p>
+                                <p class="font-semibold" id="skinToneResult">-</p>
+                            </div>
+                        </div>
+                        <div id="skinToneSwatch" class="h-8 rounded-lg"></div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 slide-up" style="animation-delay: 0.1s">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--cool-gradient)">
+                                <i class="fas fa-thermometer-half text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-70">Undertone</p>
+                                <p class="font-semibold" id="undertoneResult">-</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span id="undertoneIndicator" class="px-3 py-1 rounded-full text-sm font-medium"></span>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 slide-up" style="animation-delay: 0.2s">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--primary-gradient)">
+                                <i class="fas fa-adjust text-white"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-70">Contrast</p>
+                                <p class="font-semibold" id="contrastResult">-</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-1">
+                            <div id="contrastBar1" class="h-3 w-1/3 rounded-l-full bg-gray-600"></div>
+                            <div id="contrastBar2" class="h-3 w-1/3 bg-gray-600"></div>
+                            <div id="contrastBar3" class="h-3 w-1/3 rounded-r-full bg-gray-600"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 slide-up" style="animation-delay: 0.3s">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" id="seasonIcon">
+                                <i class="fas fa-sun text-white"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-70">Season Type</p>
+                                <p class="font-semibold" id="seasonResult">-</p>
+                            </div>
+                        </div>
+                        <span id="seasonBadge" class="seasonal-badge text-white font-medium"></span>
+                    </div>
+                </div>
+
+                <!-- Best Colors Section -->
+                <div class="mb-12 slide-up" style="animation-delay: 0.4s">
+                    <h3 class="font-display text-3xl font-bold mb-6 text-center">
+                        <i class="fas fa-star text-yellow-400 mr-2"></i>Your Best Colors
+                    </h3>
+                    
+                    <!-- Wear Categories Tabs -->
+                    <div class="flex justify-center gap-2 mb-8 flex-wrap">
+                        <button class="wear-tab active px-6 py-2 rounded-full font-medium transition-all" data-category="casual" style="background: var(--primary-gradient)">
+                            <i class="fas fa-tshirt mr-2"></i>Casual
+                        </button>
+                        <button class="wear-tab px-6 py-2 rounded-full font-medium glass-card transition-all hover:scale-105" data-category="formal">
+                            <i class="fas fa-user-tie mr-2"></i>Formal
+                        </button>
+                        <button class="wear-tab px-6 py-2 rounded-full font-medium glass-card transition-all hover:scale-105" data-category="party">
+                            <i class="fas fa-cocktail mr-2"></i>Party
+                        </button>
+                    </div>
+
+                    <!-- Color Palettes -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="bestColorsGrid">
+                            <!-- Colors will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clothing Preview -->
+                <div class="mb-12 slide-up" style="animation-delay: 0.5s">
+                    <h3 class="font-display text-3xl font-bold mb-6 text-center">
+                        <i class="fas fa-tshirt text-pink-400 mr-2"></i>See It On Clothing
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="clothingPreviewGrid">
+                        <!-- Clothing previews will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Colors to Avoid -->
+                <div class="mb-12 slide-up" style="animation-delay: 0.6s">
+                    <h3 class="font-display text-2xl font-bold mb-6 text-center">
+                        <i class="fas fa-ban text-red-400 mr-2"></i>Colors to Avoid
+                    </h3>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex flex-wrap justify-center gap-4" id="avoidColorsGrid">
+                            <!-- Avoid colors will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Try On Feature -->
+                <div class="mb-12 slide-up" style="animation-delay: 0.7s">
+                    <h3 class="font-display text-2xl font-bold mb-6 text-center">
+                        <i class="fas fa-magic text-purple-400 mr-2"></i>Try On Colors
+                    </h3>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="relative rounded-xl overflow-hidden">
+                                <img id="tryOnImage" class="w-full object-contain max-h-80 mx-auto" alt="Try On Preview">
+                                <div id="colorOverlay" class="absolute inset-0 mix-blend-color opacity-0 transition-opacity duration-300"></div>
+                            </div>
+                            <div>
+                                <p class="mb-4 opacity-70">Click on any color card above to see how it looks on you!</p>
+                                <div class="flex flex-wrap gap-2" id="quickTryColors">
+                                    <!-- Quick try colors will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share & Save -->
+                <div class="text-center slide-up" style="animation-delay: 0.8s">
+                    <div class="flex justify-center gap-4 flex-wrap">
+                        <button id="shareBtn" class="px-8 py-3 rounded-xl font-medium transition-all hover:scale-105" style="background: var(--primary-gradient)">
+                            <i class="fas fa-share-alt mr-2"></i>Share Results
+                        </button>
+                        <button id="downloadPaletteBtn" class="px-8 py-3 rounded-xl font-medium glass-card transition-all hover:scale-105">
+                            <i class="fas fa-download mr-2"></i>Download Palette
+                        </button>
+                        <button id="newAnalysisBtn" class="px-8 py-3 rounded-xl font-medium glass-card transition-all hover:scale-105">
+                            <i class="fas fa-redo mr-2"></i>New Analysis
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 px-6 py-3 rounded-xl glass-card transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center opacity-50 text-sm">
+        <p>Made with <i class="fas fa-heart text-pink-400"></i> by ColorMatch AI</p>
+        <p class="mt-2">Privacy-first: Your photos are processed locally and never stored.</p>
+    </footer>
+
+    <script>
+        // ==================== STATE MANAGEMENT ====================
+        const state = {
+            gender: 'neutral',
+            uploadedImage: null,
+            analysisResults: null,
+            currentCategory: 'casual',
+            isDarkMode: true
+        };
+
+        // ==================== COLOR DATABASE ====================
+        const colorDatabase = {
+            // Seasonal color palettes
+            seasons: {
+                spring: {
+                    name: 'Warm Spring',
+                    icon: 'fas fa-seedling',
+                    gradient: 'linear-gradient(135deg, #a8e063, #56ab2f)',
+                    colors: {
+                        casual: [
+                            { name: 'Coral', hex: '#FF7F50' },
+                            { name: 'Peach', hex: '#FFDAB9' },
+                            { name: 'Warm Yellow', hex: '#FFD700' },
+                            { name: 'Turquoise', hex: '#40E0D0' },
+                            { name: 'Salmon', hex: '#FA8072' },
+                            { name: 'Light Green', hex: '#90EE90' }
+                        ],
+                        formal: [
+                            { name: 'Camel', hex: '#C19A6B' },
+                            { name: 'Warm Navy', hex: '#3D5A80' },
+                            { name: 'Terracotta', hex: '#E2725B' },
+                            { name: 'Olive', hex: '#808000' },
+                            { name: 'Bronze', hex: '#CD7F32' },
+                            { name: 'Warm Brown', hex: '#8B4513' }
+                        ],
+                        party: [
+                            { name: 'Gold', hex: '#FFD700' },
+                            { name: 'Bright Coral', hex: '#FF6F61' },
+                            { name: 'Teal', hex: '#008080' },
+                            { name: 'Tangerine', hex: '#FF9966' },
+                            { name: 'Champagne', hex: '#F7E7CE' },
+                            { name: 'Copper', hex: '#B87333' }
+                        ]
+                    },
+                    avoid: [
+                        { name: 'Pure White', hex: '#FFFFFF' },
+                        { name: 'Cool Pink', hex: '#FFC0CB' },
+                        { name: 'Charcoal', hex: '#36454F' },
+                        { name: 'Burgundy', hex: '#800020' }
+                    ]
+                },
+                summer: {
+                    name: 'Cool Summer',
+                    icon: 'fas fa-umbrella-beach',
+                    gradient: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    colors: {
+                        casual: [
+                            { name: 'Lavender', hex: '#E6E6FA' },
+                            { name: 'Powder Blue', hex: '#B0E0E6' },
+                            { name: 'Rose', hex: '#FF007F' },
+                            { name: 'Soft Pink', hex: '#FFB6C1' },
+                            { name: 'Periwinkle', hex: '#CCCCFF' },
+                            { name: 'Mauve', hex: '#E0B0FF' }
+                        ],
+                        formal: [
+                            { name: 'Navy', hex: '#000080' },
+                            { name: 'Charcoal', hex: '#36454F' },
+                            { name: 'Burgundy', hex: '#800020' },
+                            { name: 'Plum', hex: '#DDA0DD' },
+                            { name: 'Slate Blue', hex: '#6A5ACD' },
+                            { name: 'Rose Brown', hex: '#BC8F8F' }
+                        ],
+                        party: [
+                            { name: 'Silver', hex: '#C0C0C0' },
+                            { name: 'Fuchsia', hex: '#FF00FF' },
+                            { name: 'Royal Blue', hex: '#4169E1' },
+                            { name: 'Raspberry', hex: '#E30B5C' },
+                            { name: 'Orchid', hex: '#DA70D6' },
+                            { name: 'Sapphire', hex: '#0F52BA' }
+                        ]
+                    },
+                    avoid: [
+                        { name: 'Orange', hex: '#FFA500' },
+                        { name: 'Warm Yellow', hex: '#FFD700' },
+                        { name: 'Tomato Red', hex: '#FF6347' },
+                        { name: 'Olive', hex: '#808000' }
+                    ]
+                },
+                autumn: {
+                    name: 'Warm Autumn',
+                    icon: 'fas fa-leaf',
+                    gradient: 'linear-gradient(135deg, #f2994a, #f2c94c)',
+                    colors: {
+                        casual: [
+                            { name: 'Rust', hex: '#B7410E' },
+                            { name: 'Mustard', hex: '#FFDB58' },
+                            { name: 'Olive Green', hex: '#556B2F' },
+                            { name: 'Pumpkin', hex: '#FF7518' },
+                            { name: 'Teal', hex: '#008080' },
+                            { name: 'Warm Beige', hex: '#F5F5DC' }
+                        ],
+                        formal: [
+                            { name: 'Chocolate', hex: '#7B3F00' },
+                            { name: 'Forest Green', hex: '#228B22' },
+                            { name: 'Deep Teal', hex: '#014d4e' },
+                            { name: 'Burgundy', hex: '#800020' },
+                            { name: 'Caramel', hex: '#FFD59A' },
+                            { name: 'Burnt Sienna', hex: '#E97451' }
+                        ],
+                        party: [
+                            { name: 'Gold', hex: '#FFD700' },
+                            { name: 'Bronze', hex: '#CD7F32' },
+                            { name: 'Deep Orange', hex: '#FF5722' },
+                            { name: 'Emerald', hex: '#50C878' },
+                            { name: 'Amber', hex: '#FFBF00' },
+                            { name: 'Copper', hex: '#B87333' }
+                        ]
+                    },
+                    avoid: [
+                        { name: 'Pink', hex: '#FFC0CB' },
+                        { name: 'Cool Grey', hex: '#808080' },
+                        { name: 'Royal Blue', hex: '#4169E1' },
+                        { name: 'Pure White', hex: '#FFFFFF' }
+                    ]
+                },
+                winter: {
+                    name: 'Cool Winter',
+                    icon: 'fas fa-snowflake',
+                    gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)',
+                    colors: {
+                        casual: [
+                            { name: 'True Red', hex: '#FF0000' },
+                            { name: 'Emerald', hex: '#50C878' },
+                            { name: 'Royal Blue', hex: '#4169E1' },
+                            { name: 'Hot Pink', hex: '#FF69B4' },
+                            { name: 'Pure White', hex: '#FFFFFF' },
+                            { name: 'Icy Blue', hex: '#A5F2F3' }
+                        ],
+                        formal: [
+                            { name: 'Black', hex: '#000000' },
+                            { name: 'Navy', hex: '#000080' },
+                            { name: 'Charcoal', hex: '#36454F' },
+                            { name: 'Deep Purple', hex: '#301934' },
+                            { name: 'True Blue', hex: '#0073CF' },
+                            { name: 'Burgundy Wine', hex: '#722F37' }
+                        ],
+                        party: [
+                            { name: 'Silver', hex: '#C0C0C0' },
+                            { name: 'Electric Blue', hex: '#7DF9FF' },
+                            { name: 'Magenta', hex: '#FF00FF' },
+                            { name: 'Ruby', hex: '#E0115F' },
+                            { name: 'Platinum', hex: '#E5E4E2' },
+                            { name: 'Deep Violet', hex: '#330066' }
+                        ]
+                    },
+                    avoid: [
+                        { name: 'Orange', hex: '#FFA500' },
+                        { name: 'Warm Yellow', hex: '#FFD700' },
+                        { name: 'Peach', hex: '#FFDAB9' },
+                        { name: 'Salmon', hex: '#FA8072' }
+                    ]
+                }
+            }
+        };
+
+        // ==================== DOM ELEMENTS ====================
+        const elements = {
+            uploadZone: document.getElementById('uploadZone'),
+            fileInput: document.getElementById('fileInput'),
+            previewSection: document.getElementById('previewSection'),
+            previewImage: document.getElementById('previewImage'),
+            faceBox: document.getElementById('faceBox'),
+            analyzeBtn: document.getElementById('analyzeBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            analyzingSection: document.getElementById('analyzingSection'),
+            progressFill: document.getElementById('progressFill'),
+            analysisStatus: document.getElementById('analysisStatus'),
+            resultsSection: document.getElementById('resultsSection'),
+            uploadSection: document.getElementById('uploadSection'),
+            modeToggle: document.getElementById('modeToggle'),
+            toast: document.getElementById('toast'),
+            toastMessage: document.getElementById('toastMessage'),
+            saveResults: document.getElementById('saveResults'),
+            tryOnImage: document.getElementById('tryOnImage'),
+            colorOverlay: document.getElementById('colorOverlay')
+        };
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showToast(message, duration = 3000) {
+            elements.toastMessage.textContent = message;
+            elements.toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                elements.toast.classList.add('translate-y-20', 'opacity-0');
+            }, duration);
+        }
+
+        function toggleDarkMode() {
+            state.isDarkMode = !state.isDarkMode;
+            document.body.classList.toggle('dark');
+            document.body.classList.toggle('light');
+        }
+
+        // ==================== IMAGE HANDLING ====================
+        function handleImageUpload(file) {
+            if (!file || !file.type.match(/image\/(jpeg|png|jpg)/)) {
+                showToast('Please upload a valid JPG or PNG image');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('Image size must be less than 10MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.uploadedImage = e.target.result;
+                showPreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showPreview() {
+            elements.uploadSection.classList.add('hidden');
+            elements.previewSection.classList.remove('hidden');
+            elements.previewImage.src = state.uploadedImage;
+            elements.tryOnImage.src = state.uploadedImage;
+            
+            // Simulate face detection box
+            setTimeout(() => {
+                simulateFaceDetection();
+            }, 500);
+        }
+
+        function simulateFaceDetection() {
+            const img = elements.previewImage;
+            const imgRect = img.getBoundingClientRect();
+            const containerRect = img.parentElement.getBoundingClientRect();
+            
+            // Calculate face box position (simulated - center of image)
+            const faceWidth = imgRect.width * 0.35;
+            const faceHeight = imgRect.height * 0.45;
+            const faceLeft = (containerRect.width - faceWidth) / 2;
+            const faceTop = (containerRect.height - faceHeight) / 2 - 20;
+
+            elements.faceBox.style.width = `${faceWidth}px`;
+            elements.faceBox.style.height = `${faceHeight}px`;
+            elements.faceBox.style.left = `${faceLeft}px`;
+            elements.faceBox.style.top = `${faceTop}px`;
+            elements.faceBox.classList.remove('hidden');
+        }
+
+        // ==================== AI ANALYSIS (Simulated) ====================
+        function analyzeImage() {
+            elements.previewSection.classList.add('hidden');
+            elements.analyzingSection.classList.remove('hidden');
+
+            const steps = [
+                { status: 'Detecting face...', progress: 20 },
+                { status: 'Analyzing skin tone...', progress: 40 },
+                { status: 'Determining undertone...', progress: 60 },
+                { status: 'Calculating contrast level...', progress: 80 },
+                { status: 'Generating color recommendations...', progress: 100 }
+            ];
+
+            let stepIndex = 0;
+
+            function processStep() {
+                if (stepIndex < steps.length) {
+                    elements.analysisStatus.textContent = steps[stepIndex].status;
+                    elements.progressFill.style.width = `${steps[stepIndex].progress}%`;
+                    stepIndex++;
+                    setTimeout(processStep, 800);
+                } else {
+                    // Analysis complete - perform actual color analysis
+                    performColorAnalysis();
+                }
+            }
+
+            processStep();
+        }
+
+        function performColorAnalysis() {
+            // Create a canvas to analyze the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                // Sample colors from the center region (face area)
+                const centerX = Math.floor(img.width / 2);
+                const centerY = Math.floor(img.height / 2.5);
+                const sampleWidth = Math.floor(img.width * 0.3);
+                const sampleHeight = Math.floor(img.height * 0.3);
+
+                const imageData = ctx.getImageData(
+                    centerX - sampleWidth / 2,
+                    centerY - sampleHeight / 2,
+                    sampleWidth,
+                    sampleHeight
+                );
+
+                const analysis = analyzePixelData(imageData.data);
+                state.analysisResults = analysis;
+                displayResults();
+            };
+
+            img.src = state.uploadedImage;
+        }
+
+        function analyzePixelData(pixels) {
+            let totalR = 0, totalG = 0, totalB = 0, count = 0;
+            
+            // Sample every 10th pixel for performance
+            for (let i = 0; i < pixels.length; i += 40) {
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                const a = pixels[i + 3];
+
+                // Skip very dark or very bright pixels (likely not skin)
+                const brightness = (r + g + b) / 3;
+                if (brightness > 30 && brightness < 240 && a > 200) {
+                    totalR += r;
+                    totalG += g;
+                    totalB += b;
+                    count++;
+                }
+            }
+
+            if (count === 0) count = 1;
+
+            const avgR = totalR / count;
+            const avgG = totalG / count;
+            const avgB = totalB / count;
+
+            // Calculate skin tone properties
+            const brightness = (avgR + avgG + avgB) / 3;
+            const warmth = (avgR - avgB) / 255; // Positive = warm, negative = cool
+            
+            // Determine skin tone level
+            let skinTone, skinToneHex;
+            if (brightness > 200) {
+                skinTone = 'Fair';
+                skinToneHex = '#FFE4C4';
+            } else if (brightness > 150) {
+                skinTone = 'Light';
+                skinToneHex = '#DEB887';
+            } else if (brightness > 100) {
+                skinTone = 'Medium';
+                skinToneHex = '#C4A484';
+            } else if (brightness > 70) {
+                skinTone = 'Tan';
+                skinToneHex = '#A0785A';
+            } else {
+                skinTone = 'Deep';
+                skinToneHex = '#8B6914';
+            }
+
+            // Determine undertone
+            let undertone;
+            if (warmth > 0.15) {
+                undertone = 'Warm';
+            } else if (warmth < -0.05) {
+                undertone = 'Cool';
+            } else {
+                undertone = 'Neutral';
+            }
+
+            // Determine contrast (based on brightness variance)
+            let contrast;
+            const contrastValue = Math.abs(brightness - 128) / 128;
+            if (contrastValue > 0.5) {
+                contrast = 'High';
+            } else if (contrastValue > 0.25) {
+                contrast = 'Medium';
+            } else {
+                contrast = 'Low';
+            }
+
+            // Determine season
+            let season;
+            if (undertone === 'Warm') {
+                season = brightness > 130 ? 'spring' : 'autumn';
+            } else {
+                season = brightness > 130 ? 'summer' : 'winter';
+            }
+
+            return {
+                skinTone,
+                skinToneHex,
+                undertone,
+                contrast,
+                season,
+                avgColor: { r: Math.round(avgR), g: Math.round(avgG), b: Math.round(avgB) }
+            };
+        }
+
+        // ==================== DISPLAY RESULTS ====================
+        function displayResults() {
+            elements.analyzingSection.classList.add('hidden');
+            elements.resultsSection.classList.remove('hidden');
+            elements.saveResults.classList.remove('hidden');
+
+            const results = state.analysisResults;
+            const seasonData = colorDatabase.seasons[results.season];
+
+            // Update analysis cards
+            document.getElementById('skinToneResult').textContent = results.skinTone;
+            document.getElementById('skinToneSwatch').style.background = results.skinToneHex;
+
+            document.getElementById('undertoneResult').textContent = results.undertone;
+            const undertoneIndicator = document.getElementById('undertoneIndicator');
+            undertoneIndicator.textContent = results.undertone;
+            undertoneIndicator.style.background = results.undertone === 'Warm' ? 
+                'linear-gradient(135deg, #f2994a, #f2c94c)' : 
+                results.undertone === 'Cool' ? 
+                'linear-gradient(135deg, #667eea, #764ba2)' : 
+                'linear-gradient(135deg, #a8a8a8, #d4d4d4)';
+
+            document.getElementById('contrastResult').textContent = results.contrast;
+            const contrastLevel = results.contrast === 'High' ? 3 : results.contrast === 'Medium' ? 2 : 1;
+            for (let i = 1; i <= 3; i++) {
+                const bar = document.getElementById(`contrastBar${i}`);
+                bar.style.background = i <= contrastLevel ? 'var(--primary-gradient)' : '#4a4a6a';
+            }
+
+            document.getElementById('seasonResult').textContent = seasonData.name;
+            document.getElementById('seasonIcon').style.background = seasonData.gradient;
+            document.getElementById('seasonIcon').innerHTML = `<i class="${seasonData.icon} text-white"></i>`;
+            document.getElementById('seasonBadge').textContent = seasonData.name;
+            document.getElementById('seasonBadge').className = `seasonal-badge text-white font-medium ${results.season}`;
+
+            // Display colors for current category
+            updateColorDisplay();
+
+            // Scroll to results
+            elements.resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateColorDisplay() {
+            const results = state.analysisResults;
+            const seasonData = colorDatabase.seasons[results.season];
+            const colors = seasonData.colors[state.currentCategory];
+            const avoidColors = seasonData.avoid;
+
+            // Update best colors grid
+            const bestColorsGrid = document.getElementById('bestColorsGrid');
+            bestColorsGrid.innerHTML = colors.map((color, index) => `
+                <div class="color-card rounded-xl overflow-hidden shadow-lg" 
+                     onclick="tryOnColor('${color.hex}')"
+                     style="animation-delay: ${index * 0.1}s">
+                    <div class="h-24 md:h-32" style="background: ${color.hex}"></div>
+                    <div class="p-3 glass-card">
+                        <p class="font-medium text-sm">${color.name}</p>
+                        <p class="text-xs opacity-70">${color.hex}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update clothing preview
+            updateClothingPreview(colors);
+
+            // Update avoid colors
+            const avoidColorsGrid = document.getElementById('avoidColorsGrid');
+            avoidColorsGrid.innerHTML = avoidColors.map(color => `
+                <div class="color-card rounded-xl overflow-hidden shadow-lg opacity-70">
+                    <div class="h-16 w-24 relative" style="background: ${color.hex}">
+                        <i class="fas fa-times absolute inset-0 flex items-center justify-center text-red-500 text-2xl" 
+                           style="text-shadow: 0 0 10px rgba(0,0,0,0.5)"></i>
+                    </div>
+                    <div class="p-2 glass-card text-center">
+                        <p class="text-xs">${color.name}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update quick try colors
+            const quickTryColors = document.getElementById('quickTryColors');
+            quickTryColors.innerHTML = colors.slice(0, 6).map(color => `
+                <button class="w-10 h-10 rounded-full border-2 border-white/30 transition-transform hover:scale-110"
+                        style="background: ${color.hex}"
+                        onclick="tryOnColor('${color.hex}')"
+                        title="${color.name}">
+                </button>
+            `).join('');
+        }
+
+        function updateClothingPreview(colors) {
+            const clothingTypes = [
+                { type: 'shirt', icon: 'fa-tshirt', name: 'T-Shirt' },
+                { type: 'dress', icon: 'fa-person-dress', name: 'Dress' },
+                { type: 'hoodie', icon: 'fa-vest', name: 'Hoodie' },
+                { type: 'blazer', icon: 'fa-user-tie', name: 'Blazer' }
+            ];
+
+            const grid = document.getElementById('clothingPreviewGrid');
+            grid.innerHTML = clothingTypes.map((item, index) => `
+                <div class="clothing-preview glass-card rounded-2xl p-6 text-center">
+                    <div class="w-24 h-24 mx-auto rounded-xl flex items-center justify-center mb-4"
+                         style="background: ${colors[index % colors.length].hex}">
+                        <i class="fas ${item.icon} text-4xl" style="color: ${getContrastColor(colors[index % colors.length].hex)}"></i>
+                    </div>
+                    <p class="font-medium">${item.name}</p>
+                    <p class="text-sm opacity-70">${colors[index % colors.length].name}</p>
+                </div>
+            `).join('');
+        }
+
+        function getContrastColor(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 128 ? '#000000' : '#ffffff';
+        }
+
+        function tryOnColor(hex) {
+            elements.colorOverlay.style.background = hex;
+            elements.colorOverlay.style.opacity = '0.4';
+            showToast(`Trying ${hex} - Click another color to compare!`);
+        }
+
+        // ==================== SAVE & SHARE ====================
+        function saveResults() {
+            const results = state.analysisResults;
+            const data = {
+                analysisDate: new Date().toISOString(),
+                ...results,
+                recommendations: colorDatabase.seasons[results.season]
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'color-analysis-results.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Results saved successfully!');
+        }
+
+        function downloadPalette() {
+            const results = state.analysisResults;
+            const seasonData = colorDatabase.seasons[results.season];
+            const colors = seasonData.colors.casual;
+
+            // Create canvas for palette image
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+
+            // Background
+            ctx.fillStyle = state.isDarkMode ? '#1a1a2e' : '#ffffff';
+            ctx.fillRect(0, 0, 600, 400);
+
+            // Title
+            ctx.fillStyle = state.isDarkMode ? '#ffffff' : '#1a1a2e';
+            ctx.font = 'bold 24px Playfair Display';
+            ctx.fillText('Your Color Palette', 30, 50);
+
+            // Subtitle
+            ctx.font = '14px Inter';
+            ctx.fillStyle = state.isDarkMode ? '#a0a0b0' : '#6b7280';
+            ctx.fillText(`${seasonData.name} • ${results.undertone} Undertone`, 30, 75);
+
+            // Color swatches
+            colors.forEach((color, i) => {
+                const x = 30 + (i % 3) * 185;
+                const y = 100 + Math.floor(i / 3) * 120;
+                
+                ctx.fillStyle = color.hex;
+                ctx.fillRect(x, y, 170, 80);
+
+                ctx.fillStyle = getContrastColor(color.hex);
+                ctx.font = 'bold 14px Inter';
+                ctx.fillText(color.name, x + 10, y + 30);
+                ctx.font = '12px Inter';
+                ctx.fillText(color.hex, x + 10, y + 50);
+            });
+
+            // Footer
+            ctx.fillStyle = state.isDarkMode ? '#a0a0b0' : '#6b7280';
+            ctx.font = '12px Inter';
+            ctx.fillText('Generated by ColorMatch AI', 30, 380);
+
+            // Download
+            const link = document.createElement('a');
+            link.download = 'my-color-palette.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            showToast('Palette downloaded!');
+        }
+
+        async function shareResults() {
+            const results = state.analysisResults;
+            const text = `🎨 My Color Analysis Results!\n\n` +
+                `Skin Tone: ${results.skinTone}\n` +
+                `Undertone: ${results.undertone}\n` +
+                `Season: ${colorDatabase.seasons[results.season].name}\n\n` +
+                `Discover your perfect colors at ColorMatch AI!`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'My Color Analysis', text });
+                    showToast('Shared successfully!');
+                } catch (err) {
+                    copyToClipboard(text);
+                }
+            } else {
+                copyToClipboard(text);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast('Results copied to clipboard!');
+        }
+
+        function resetAnalysis() {
+            state.uploadedImage = null;
+            state.analysisResults = null;
+            elements.previewSection.classList.add('hidden');
+            elements.resultsSection.classList.add('hidden');
+            elements.uploadSection.classList.remove('hidden');
+            elements.saveResults.classList.add('hidden');
+            elements.faceBox.classList.add('hidden');
+            elements.colorOverlay.style.opacity = '0';
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        // Drag and drop
+        elements.uploadZone.addEventListener('click', () => elements.fileInput.click());
+        elements.fileInput.addEventListener('change', (e) => handleImageUpload(e.target.files[0]));
+
+        elements.uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.uploadZone.classList.add('dragover');
+        });
+
+        elements.uploadZone.addEventListener('dragleave', () => {
+            elements.uploadZone.classList.remove('dragover');
+        });
+
+        elements.uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.uploadZone.classList.remove('dragover');
+            handleImageUpload(e.dataTransfer.files[0]);
+        });
+
+        // Analysis
+        elements.analyzeBtn.addEventListener('click', analyzeImage);
+        elements.resetBtn.addEventListener('click', resetAnalysis);
+
+        // Mode toggle
+        elements.modeToggle.addEventListener('click', toggleDarkMode);
+
+        // Gender selection
+        document.querySelectorAll('.gender-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.gender-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = '';
+                    b.classList.add('glass-card');
+                });
+                btn.classList.add('active');
+                btn.classList.remove('glass-card');
+                btn.style.background = 'var(--primary-gradient)';
+                state.gender = btn.dataset.gender;
+            });
+        });
+
+        // Wear category tabs
+        document.querySelectorAll('.wear-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.wear-tab').forEach(t => {
+                    t.classList.remove('active');
+                    t.style.background = '';
+                    t.classList.add('glass-card');
+                });
+                tab.classList.add('active');
+                tab.classList.remove('glass-card');
+                tab.style.background = 'var(--primary-gradient)';
+                state.currentCategory = tab.dataset.category;
+                if (state.analysisResults) {
+                    updateColorDisplay();
+                }
+            });
+        });
+
+        // Save & Share
+        elements.saveResults.addEventListener('click', saveResults);
+        document.getElementById('downloadPaletteBtn')?.addEventListener('click', downloadPalette);
+        document.getElementById('shareBtn')?.addEventListener('click', shareResults);
+        document.getElementById('newAnalysisBtn')?.addEventListener('click', resetAnalysis);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Preload animations
+            document.querySelectorAll('.slide-up').forEach((el, i) => {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                }, i * 100);
+            });
+        });
+    </script>
+
+</body></html>
